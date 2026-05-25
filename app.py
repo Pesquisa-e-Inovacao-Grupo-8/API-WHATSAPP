@@ -6,6 +6,8 @@ import os
 
 app = Flask(__name__)
 
+load_dotenv()  # Carrega as variáveis de ambiente do arquivo .env
+
 # Credenciais
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
@@ -104,28 +106,26 @@ def mensagem_lembrete_pacote(data):
 def notify_agendamento():
 
     print("REQUISIÇÃO RECEBIDA")
-    agendamentos = request.get_json()
-    print(agendamentos)
-    resultados = []
 
+    dataBruta = request.get_json()
+    print("DADOS BRUTOS:", dataBruta)
+    print("SEVICO:", dataBruta["servico"])
+    data = {
+        "telefone": dataBruta["telefone"],
+        "cliente": dataBruta["cliente"],
+        "servico": dataBruta["servico"]["nome"],
+        "data": dataBruta["data"],
+        "horario": dataBruta["horaInicio"],
+        "ordemPedido": dataBruta["ordemPedido"]
+    }
+    print(data)
 
-    for agendamento in agendamentos:
+    sms = enviar_mensagem(
+        data["telefone"],
+        mensagem_agendamento(data)
+    )
 
-        print("ENVIANDO MENSAGEM PARA: ", agendamento["cliente"])
-
-        return "ok" , 200
-
-
-        sms = enviar_mensagem(
-            agendamento["telefone"],
-            mensagem_agendamento(agendamento)
-        )
-
-        resultados.append({
-            "cliente": agendamento["cliente"],
-            "sid": sms.sid
-        })
-        sleep(1)  # Evitar enviar mensagens muito rápido    
+    return "ok" , 200
 
 
     return jsonify({
