@@ -23,10 +23,10 @@ def enviar_mensagem(numero, mensagem):
 
     sms = client.messages.create(
         body=mensagem,
-        from_=TWILIO_PHONE_NUMBER,
+        from_="whatsapp:+14155238886",  # sandbox Twilio
         to=f"whatsapp:{numero}"
     )
-
+    
     return sms
 
 
@@ -67,23 +67,34 @@ Seu horário está confirmado 🎉
 
 
 # ============================================
-# TEMPLATE - LEMBRETE
+# TEMPLATE - LEMBRETE AGENDAMENTO
 # ============================================
-def mensagem_lembrete(data):
+def mensagem_lembrete_agendamento(data):
 
     return f"""
-⏰ Lembrete do seu agendamento!
+⏰ *Lembrete de Agendamento*
 
 Olá, {data['cliente']} 😊
 
-Seu atendimento acontecerá em 2 dias.
+Passando para confirmar seu atendimento agendado.
 
-📌 Serviço: {data['servico']}
-🗓️ Data: {data['data']}
-⏰ Horário: {data['horario']}
+📅 *Data:* {data['data']}
+⏰ *Horário:* {data['horaInicio']}
+🧾 *Pedido:* {data['ordemPedido']}
 
-Nos vemos em breve ❤️
+Nosso time está pronto para te atender com todo cuidado 💙
+
+Qualquer dúvida, estamos à disposição!
 """
+
+# ============================================
+# TEMPLATE - LEMBRETE PACOTE
+# ============================================
+def mensagem_lembrete_pacote(data):
+
+    return f"""
+    ⏰ Lembrete do seu pacote!  
+    """
 
 
 # ============================================
@@ -92,12 +103,30 @@ Nos vemos em breve ❤️
 @app.route("/notify/agendamento", methods=["POST"])
 def notify_agendamento():
 
-    data = request.get_json()
+    print("REQUISIÇÃO RECEBIDA")
+    agendamentos = request.get_json()
+    print(agendamentos)
+    resultados = []
 
-    sms = enviar_mensagem(
-        data["telefone"],
-        mensagem_agendamento(data)
-    )
+
+    for agendamento in agendamentos:
+
+        print("ENVIANDO MENSAGEM PARA: ", agendamento["cliente"])
+
+        return "ok" , 200
+
+
+        sms = enviar_mensagem(
+            agendamento["telefone"],
+            mensagem_agendamento(agendamento)
+        )
+
+        resultados.append({
+            "cliente": agendamento["cliente"],
+            "sid": sms.sid
+        })
+        sleep(1)  # Evitar enviar mensagens muito rápido    
+
 
     return jsonify({
         "success": True,
@@ -125,16 +154,16 @@ def notify_pagamento():
 
 
 # ============================================
-# ENDPOINT - LEMBRETE
+# ENDPOINT - LEMBRETE AGENDAMENTO
 # ============================================
-@app.route("/notify/lembrete", methods=["POST"])
+@app.route("/notify/lembrete-agendamento", methods=["POST"])
 def notify_lembrete():
 
     data = request.get_json()
 
     sms = enviar_mensagem(
         data["telefone"],
-        mensagem_lembrete(data)
+        mensagem_lembrete_agendamento(data)
     )
 
     return jsonify({
